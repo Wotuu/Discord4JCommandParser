@@ -8,6 +8,7 @@ package nl.wotuu.discord4jcommandparser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import junit.framework.Assert;
 import sx.blah.discord.api.events.IListener;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
@@ -27,6 +28,11 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
      */
     private IUser ourBot;
     
+    /**
+     * True to print some debug info.
+     */
+    private Boolean debug;
+    
     public CommandMRListener(IUser ourBot){
         this.ourBot = ourBot;
     }
@@ -38,17 +44,18 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
      */
     @Override
     public void handle(MessageReceivedEvent event) { // This is called when the ReadyEvent is dispatched
-        System.out.println(">> handle()");
+        log(">> handle()");
         IMessage message = event.getMessage();
-
+        Assert.assertTrue(message != null);
+        
         // Radio message
         String content = message.getContent();
-        System.out.println(content);
+        log(content);
 
         Boolean isMentioned = false;
         for (IUser user : message.getMentions()) {
             if (user.getID().equals(this.ourBot.getID())) {
-                System.out.println(user.mention());
+                log(user.mention());
                 isMentioned = true;
                 // Replace all mentions to the bot
                 content = content.replace(user.mention().replace("!", ""), "").trim();
@@ -62,10 +69,10 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
         ICommandListener listener = this.getCommandRecursive(this, paramsList);
         
         if (listener != null) {
-            System.out.println(listener.getClass().getName());
-            System.out.println("Strict: " + listener.isStrict());
+            log(listener.getClass().getName());
+            log("Strict: " + listener.isStrict());
             for(String param : paramsList ){
-                System.out.println("param: " + param);
+                log("param: " + param);
             }
             // If mention is there, and matches strict checking
             if (((listener.requiresMention() && isMentioned) || !listener.requiresMention()) &&
@@ -82,7 +89,7 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
                 }
             }
         }
-        System.out.println("OK handle()");
+        log("OK handle()");
     }
     
     /**
@@ -93,7 +100,7 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
      * @return The found command listener, or NULL if none was found.
      */
     protected ICommandListener getCommandRecursive(ISubListener rootListener, List<String> params){
-        System.out.println(">> " + params.size());
+        log(">> " + params.size());
         // For any potential sub listener ..
         for(ICommandListener subListener : rootListener.getSubListener() ){
             // For each commands it will be triggered on
@@ -112,7 +119,7 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
                         // Find them too
                         ICommandListener recursiveListener = getCommandRecursive((ISubListener)subListener, params);
                         if( recursiveListener != null ){
-                            System.out.println("Found: " + recursiveListener.getClass().getName() + ", paramsSize: " + params.size());
+                            log("Found: " + recursiveListener.getClass().getName() + ", paramsSize: " + params.size());
                             // We found something
                             result = recursiveListener;
                             // Be sure to pass its parameters correctly (otherwise
@@ -126,20 +133,37 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
                         result = subListener;
                     }
                     
-                    // System.out.println("Clearing " + params.size() + " params, setting " + currentParams.size() + " params");
+                    // log("Clearing " + params.size() + " params, setting " + currentParams.size() + " params");
                     // Restore parameters back to the list
                     params.clear();
-                    // System.out.println("2: clearing " + params.size() + " params, setting " + currentParams.size() + " params");
+                    // log("2: clearing " + params.size() + " params, setting " + currentParams.size() + " params");
                     params.addAll(currentParams);
                     
-                    System.out.println("OK 2 - " + params.size());
+                    log("OK 2 - " + params.size());
                     return result;
                 }
             }
         }
-        System.out.println("OK " + params.size());
+        log("OK " + params.size());
         
         // Not found any matching commands
         return null;
+    }
+    
+    /**
+     * Logs a message to the console.
+     * @param message Message to log (if debug is enabled).
+     */
+    private void log(String message){
+        if( this.debug ){
+            System.out.println(message);
+        }
+    }
+    
+    /**
+     * Enables debugging of the class; will print out messages in the log.
+     */
+    public void enableDebug(){
+        this.debug = true;
     }
 }
