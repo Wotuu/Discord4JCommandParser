@@ -26,15 +26,16 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
     /**
      * The user that is our bot. Used for checking if we were mentioned or not.
      */
-    private IUser ourBot;
+    private final String ourBotID;
     
     /**
      * True to print some debug info.
      */
     private Boolean debug;
     
-    public CommandMRListener(IUser ourBot){
-        this.ourBot = ourBot;
+    public CommandMRListener(String userID){
+        assert(userID != null);
+        this.ourBotID = userID;
     }
     
     /**
@@ -46,15 +47,21 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
     public void handle(MessageReceivedEvent event) { // This is called when the ReadyEvent is dispatched
         log(">> handle()");
         IMessage message = event.getMessage();
-        Assert.assertTrue(message != null);
+        Assert.assertTrue("Message is null!", message != null);
         
         // Radio message
         String content = message.getContent();
         log(content);
 
         Boolean isMentioned = false;
+        Assert.assertTrue(message.getMentions() != null);
+        
         for (IUser user : message.getMentions()) {
-            if (user.getID().equals(this.ourBot.getID())) {
+            Assert.assertTrue(user != null);
+            log(user.getClass().getName());
+            Assert.assertTrue(user.getID() != null);
+            
+            if (user.getID().equals(ourBotID)) {
                 log(user.mention());
                 isMentioned = true;
                 // Replace all mentions to the bot
