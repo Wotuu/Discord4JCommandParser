@@ -4,7 +4,7 @@ Small library which parses incoming messages to a Discord bot using Discord4J, a
 # Usage example
 Create a class extending CommandMRListener. This class will serve as the root access point for all commands. For example, if the user enters the command `radio get-currently-playing`, this class will handle the `radio` part of the message.
 
-```
+```java
 public class RootCommandMRListener extends CommandMRListener {
     public RootCommandMRListener(String botUserID) {
         super(botUserID);
@@ -23,9 +23,20 @@ public class RootCommandMRListener extends CommandMRListener {
 }
 ```
 
+Add an instance of this class to your Discord4J's EventDispatcher:
+
+```java
+public static void main(String[] args) {
+	Main.client = Main.getClient(Main.TOKEN, true);
+	EventDispatcher dispatcher = client.getDispatcher();
+	
+	dispatcher.registerListener(new RootCommandMRListener(Main.ID));
+}
+```
+
 Adding a new command is as simple as implementing the `ICommandListener` interface.
 
-```
+```java
 public class RadioCommand implements ICommandListener, ISubListener {
     @Override
     public Boolean isStrict() { return false; }
