@@ -6,6 +6,9 @@
 package nl.wotuu.discord4jcommandparser;
 
 import sx.blah.discord.handle.obj.IMessage;
+import sx.blah.discord.util.DiscordException;
+import sx.blah.discord.util.MissingPermissionsException;
+import sx.blah.discord.util.RateLimitException;
 
 /**
  *
@@ -43,6 +46,9 @@ public interface ICommandListener {
      * @param params Any additional parameters the user has provided. Note that if
      * you have a strict command, these parameters will always be empty (otherwise
      * it wouldn't be strict, either remove the strict requirement or pass less parameters).
+     * @throws sx.blah.discord.util.MissingPermissionsException
+     * @throws sx.blah.discord.util.RateLimitException
+     * @throws sx.blah.discord.util.DiscordException
      */
-    void handleCommand(IMessage message, String[] params);
+    void handleCommand(IMessage message, String[] params) throws MissingPermissionsException, RateLimitException, DiscordException;
 }

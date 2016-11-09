@@ -89,7 +89,8 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
                 } catch (Exception ex) {
                     try {
                         System.err.println(ex);
-                        message.getChannel().sendMessage("Unable to process: " + ex.getLocalizedMessage());
+                        // Print the stacktrace in markdown
+                        message.getChannel().sendMessage("Unable to process; " + ex.getClass().getName() + ": ```" + Utils.getStackTraceString(ex.getStackTrace()) + "```");
                     } catch (MissingPermissionsException | RateLimitException | DiscordException ex1) {
                         System.err.println(ex1);
                     }
@@ -107,51 +108,53 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
      * @return The found command listener, or NULL if none was found.
      */
     protected ICommandListener getCommandRecursive(ISubListener rootListener, List<String> params){
-        log(">> " + params.size());
-        // For any potential sub listener ..
-        for(ICommandListener subListener : rootListener.getSubListener() ){
-            // For each commands it will be triggered on
-            for(String command : subListener.getCommands() ){
-                // If it triggers the first parameter, find more
-                if( command.equals(params.get(0)) ){
-                    // Pop the first parameter
-                    params.remove(0);
-                    
-                    // Keep a copy of the parameters as they are now
-                    List<String> currentParams = new ArrayList<>();
-                    currentParams.addAll(params);
-                    ICommandListener result = null;
-                    // If this sub listener has more sub listeners themselves
-                    if( subListener instanceof ISubListener ){
-                        // Find them too
-                        ICommandListener recursiveListener = getCommandRecursive((ISubListener)subListener, params);
-                        if( recursiveListener != null ){
-                            log("Found: " + recursiveListener.getClass().getName() + ", paramsSize: " + params.size());
-                            // We found something
-                            result = recursiveListener;
-                            // Be sure to pass its parameters correctly (otherwise
-                            // we'd include too much parameters)
-                            currentParams.clear();
-                            currentParams.addAll(params);
+        log(">> getCommandRecursive(): " + params.size());
+        if( !params.isEmpty() ){
+            // For any potential sub listener ..
+            for(ICommandListener subListener : rootListener.getSubListener() ){
+                // For each commands it will be triggered on
+                for(String command : subListener.getCommands() ){
+                    // If it triggers the first parameter, find more
+                    if( !params.isEmpty() && command.equalsIgnoreCase(params.get(0)) ){
+                        // Pop the first parameter
+                        params.remove(0);
+
+                        // Keep a copy of the parameters as they are now
+                        List<String> currentParams = new ArrayList<>();
+                        currentParams.addAll(params);
+                        ICommandListener result = null;
+                        // If this sub listener has more sub listeners themselves
+                        if( subListener instanceof ISubListener ){
+                            // Find them too
+                            ICommandListener recursiveListener = getCommandRecursive((ISubListener)subListener, params);
+                            if( recursiveListener != null ){
+                                log("Found: " + recursiveListener.getClass().getName() + ", paramsSize: " + params.size());
+                                // We found something
+                                result = recursiveListener;
+                                // Be sure to pass its parameters correctly (otherwise
+                                // we'd include too much parameters)
+                                currentParams.clear();
+                                currentParams.addAll(params);
+                            }
                         }
+                        // Nothing found; we already had our match
+                        if( result == null ){
+                            result = subListener;
+                        }
+
+                        // log("Clearing " + params.size() + " params, setting " + currentParams.size() + " params");
+                        // Restore parameters back to the list
+                        params.clear();
+                        // log("2: clearing " + params.size() + " params, setting " + currentParams.size() + " params");
+                        params.addAll(currentParams);
+
+                        log("OK 2 getCommandRecursive(): " + params.size());
+                        return result;
                     }
-                    // Nothing found; we already had our match
-                    if( result == null ){
-                        result = subListener;
-                    }
-                    
-                    // log("Clearing " + params.size() + " params, setting " + currentParams.size() + " params");
-                    // Restore parameters back to the list
-                    params.clear();
-                    // log("2: clearing " + params.size() + " params, setting " + currentParams.size() + " params");
-                    params.addAll(currentParams);
-                    
-                    log("OK 2 - " + params.size());
-                    return result;
                 }
             }
         }
-        log("OK " + params.size());
+        log("OK getCommandRecursive(): " + params.size());
         
         // Not found any matching commands
         return null;
