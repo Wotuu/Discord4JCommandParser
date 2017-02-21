@@ -5,6 +5,9 @@
  */
 package nl.wotuu.discord4jcommandparser;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 /**
  *
  * @author wouter.koppenol
@@ -32,5 +35,25 @@ public class Utils {
             sb.append(ste.toString()).append(lineSeparator);
         }
         return sb.toString();
+    }
+    
+    /**
+     * Join a string array or list with a delimiter.
+     *
+     * @param s         The array or list to join.
+     * @param delimiter The delimiter to glue the pieces together with.
+     * @return The joined string.
+     */
+    public static String join(Collection<?> s, String delimiter) {
+        StringBuilder builder = new StringBuilder();
+        Iterator<?> iterator = s.iterator();
+        while (iterator.hasNext()) {
+            builder.append(iterator.next());
+            if (!iterator.hasNext()) {
+                break;
+            }
+            builder.append(delimiter);
+        }
+        return builder.toString();
     }
 }

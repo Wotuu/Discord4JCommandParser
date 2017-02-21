@@ -78,14 +78,25 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
         if (listener != null) {
             log(listener.getClass().getName());
             log("Strict: " + listener.isStrict());
-            for(String param : paramsList ){
+            boolean isHelpCommand = false;
+            for(int i = 0; i < paramsList.size(); i++ ){
+                String param = paramsList.get(i);
                 log("param: " + param);
+                // If the last ..
+                if( i == paramsList.size() - 1 && param.equals("?") || param.equals("help") ){
+                    isHelpCommand = true;
+                }
             }
             // If mention is there, and matches strict checking
-            if (((listener.requiresMention() && isMentioned) || !listener.requiresMention()) &&
-                    ((listener.isStrict() && paramsList.isEmpty()) || !listener.isStrict())) {
+            boolean triggersCommand = (((listener.requiresMention() && isMentioned) || !listener.requiresMention()) &&
+                    ((listener.isStrict() && paramsList.isEmpty()) || !listener.isStrict()));
+            if ( triggersCommand || isHelpCommand) {
                 try {
-                    listener.handleCommand(message, paramsList.toArray(new String[0]));
+                    if( isHelpCommand ){
+                        message.getChannel().sendMessage("```" + getHelpMessageRecursive(listener, 0) + "```");
+                    } else {
+                        listener.handleCommand(message, paramsList.toArray(new String[0]));
+                    }
                 } catch (Exception ex) {
                     try {
                         System.err.println(ex);
@@ -158,6 +169,47 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
         
         // Not found any matching commands
         return null;
+    }
+    
+    /**
+     * Gets the full help message in a recursive way, iterating through any sub 
+     * listeners and their commands. Finally, the message is formatted in a more
+     * easily human readable form.
+     * @param listener The listener to construct the full help message for.
+     * @param depth The current depth of . Initial call should pass 0 here.
+     * @return The fully formatted 
+     */
+    private String getHelpMessageRecursive(ICommandListener listener, int depth){
+        StringBuilder result = new StringBuilder();
+        
+        // Add a space between the depth --- and text
+        String depthString = depth == 0 ? "" : new String(new char[depth]).replace("\0", "-") + " ";
+        List<String> actions = new ArrayList<>();
+        if( listener.isStrict() ){
+            actions.add("strict");
+        }
+        if( listener.requiresMention()){
+            actions.add("requires mention");
+        }
+        
+        String actionsRequired = actions.isEmpty() ? "" : " (" + Utils.join(actions, ", ") + ")"; 
+        
+        String helpString = listener instanceof IHelpCommand ? ((IHelpCommand)listener).getHelpMessage() : "No help text found";
+        
+        String[] commands = listener.getCommands();
+        if( commands.length > 0 ){
+            String commandAliases = commands.length > 1 ? String.format(" (alias: %s)", Utils.join(Arrays.asList(commands).subList(1, commands.length), ", ")) : "";
+            result.append(String.format("%s%s%s: %s%s\n", depthString, commands[0], commandAliases, helpString, actionsRequired));
+        }
+        
+        if( listener instanceof ISubListener ){
+            int newDepth = ++depth;
+            for(ICommandListener recurseCommand : ((ISubListener)listener).getSubListener()){
+                result.append(getHelpMessageRecursive(recurseCommand, newDepth));
+            }
+        }
+        
+        return result.toString();
     }
     
     /**
