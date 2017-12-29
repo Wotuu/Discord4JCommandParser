@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import junit.framework.Assert;
 import sx.blah.discord.api.events.IListener;
-import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
+import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
@@ -59,9 +59,9 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
         for (IUser user : message.getMentions()) {
             Assert.assertTrue(user != null);
             log(user.getClass().getName());
-            Assert.assertTrue(user.getID() != null);
+            Assert.assertTrue(user.getStringID() != null);
             
-            if (user.getID().equals(ourBotID)) {
+            if (user.getStringID().equals(ourBotID)) {
                 log(user.mention());
                 isMentioned = true;
                 // Replace all mentions to the bot
