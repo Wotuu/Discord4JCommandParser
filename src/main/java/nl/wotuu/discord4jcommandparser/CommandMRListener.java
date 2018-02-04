@@ -73,6 +73,14 @@ public abstract class CommandMRListener implements IListener<MessageReceivedEven
         String[] split = content.split(" ");
         List<String> paramsList = new ArrayList<>(Arrays.asList(split));
         
+        // Remove empty strings from the params (people accidentally doing two spaces)
+        for(int i = 0; i < paramsList.size(); i++ ){
+            if( paramsList.get(i).isEmpty() ){
+                paramsList.remove(i);
+                i--;
+            }
+        }
+        
         ICommandListener listener = this.getCommandRecursive(this, paramsList);
         
         if (listener != null) {
