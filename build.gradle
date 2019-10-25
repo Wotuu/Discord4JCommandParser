@@ -19,5 +19,5 @@ dependencies {
     // You can read more about how to add dependency here:
     //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:how_to_declare_your_dependencies
     testCompile group: 'junit', name: 'junit', version: '4.10'
-    compile("com.github.austinv11:Discord4j:master-SNAPSHOT")
+    compile("com.github.Discord4J:Discord4J:2.9.3")
 }
